@@ -1,0 +1,255 @@
+/* Armand Sarkezians
+// Started May 24th, handed in on June 15th
+// This game involves a black box and a moving wall. So long as the black box is in the hole inside the moving wall, the game continues. 
+// If the black box hits the moving wall, the game ends
+ */
+
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.concurrent.*;
+
+
+public class HoleInTheWall extends JPanel implements KeyListener, MouseListener{
+	int yPosition = 550; // y position of the square	
+	int xPosition = 50; // x position of the square
+	int oldYPosition = 550; // old y position of the square
+	int xWallPosition = 808; // x position of the wall
+	int randomPosition; // random hole in the wall
+	int points = 0; // number of points the user has
+	int reducedDelay = 8; // delay between movement of the wall, lessens as the walls pass
+	Graphics bufferingGraphics; // background image
+	Color customColor = new Color(238, 238, 238); // greyish color, looks cool
+	boolean stopRunning = true; // stop asking for mouse input
+
+
+
+	/* This method constructs the frame and panel
+	// No Parameters
+	// No return
+	 */
+	public HoleInTheWall(){ // Constructor
+		setPreferredSize(new Dimension (800, 600)); // setting size 
+		setFocusable(true); // setting the window focusable for mouse and key listener
+		addMouseListener(this); // adding mouse listener
+		addKeyListener(this);} // adding key listener
+
+
+
+	/* This method prints the main image on the screen
+	// Graphics g is the parameter, allows the main image to be printed
+	// No return value
+	 */
+	public void paint(Graphics g){
+		super.paintComponent(g); 
+		Image menu = Toolkit.getDefaultToolkit ().getImage ("MainMenu.jpg"); // main image
+		g.drawImage(menu, 0, 0, this);} // drawingImage
+
+
+
+	/* This method draws out the moving wall, the user and the points
+	// No parameters
+	// No return value
+	 */
+	public void drawEverything(){
+		Graphics g = getGraphics();
+		Image bufferingImage  = createImage (this.getWidth (), this.getHeight ());
+		bufferingGraphics = bufferingImage.getGraphics ();
+		bufferingGraphics.fillRect(xPosition, yPosition, 8, 8); // drawing moving square
+		bufferingGraphics.setColor(Color.BLACK); // Drawing wall
+		bufferingGraphics.fillRect(xWallPosition, 0, 8, randomPosition - 32); // drawing top half of the wall
+		bufferingGraphics.fillRect(xWallPosition, randomPosition, 8, 600); // drawing bottom half of the wall
+		bufferingGraphics.drawString("Points: " + points, 0, 10); // drawing string with the points
+		g.drawImage (bufferingImage, 0, 0, this);}
+
+
+
+	/* This method draws the ending screen, delays it for 4 seconds and then quits the program
+	// No parameters
+	// No return value
+	 */
+	public void endingScreen(){
+		Graphics g = getGraphics();
+		Image endingScreen = Toolkit.getDefaultToolkit().getImage("EndingScreen.jpg");
+		g.setColor (customColor);
+		g.fillRect (0, 0, 800, 600);
+			for (int x = 0; x <= 800; x++){ // putting time at the top right
+				delay(2);
+				g.drawImage(endingScreen, 0, 0, x, 600, this);}
+			for (int x = 3; x >= 0; x--){ // putting time at the top right
+				g.setColor(Color.BLACK);
+				g.drawString ("" + x, 780, 20);
+				delay(1000);
+				g.setColor(Color.WHITE);
+				g.drawString("" + x, 780, 20);}
+		System.exit(0);}
+
+
+
+	/* This method draws the instructions screen, tells the user what to do, delays it or 8 seconds and then goes back to the main menu
+	// No parameters
+	// No return value
+	 */
+	public void instructions (){
+		Graphics g = getGraphics ();
+		Image instructionsMenu = Toolkit.getDefaultToolkit().getImage("Instructions.jpg");
+			for (int x = 0; x<= 800; x++){ // putting time at the top right
+				delay (2);
+				g.drawImage(instructionsMenu, 0, 0, x, 600, this);}
+			for (int x = 7; x >= 0; x--){ // putting time at the top right
+				g.setColor(Color.BLACK);
+				g.drawString ("" + x, 780, 20); // draws black number
+				delay(1000);
+				g.setColor(Color.WHITE);
+				g.drawString("" + x, 780, 20);} // draws white number ontop, to ensure that the numbers do not overlap
+		stopRunning = true;} // goes back to main page
+
+
+
+	// This class runs the moving wall method at the same time as the mouseClicked method
+	public class movingWallEasy extends Thread{
+		/* This class runs forever, it calculates the position of the wall and calls on drawEverything to display it
+		// No parameters
+		// No return value
+		 */
+		public void run(){ 
+			while (true){ // runs forever
+				randomPosition = (int) (Math.random() * (600 - 32 + 1) + 32);
+				while (xWallPosition >= -8){ // wall moves till -8, wall is 8 thick so it goes until its completely off screen
+					if (xWallPosition == xPosition && !(yPosition >= randomPosition - 32 && yPosition <= randomPosition)){
+						stopRunning = true; // stop displaying main screen
+						endingScreen();} // run ending screen
+					else if (xWallPosition == xPosition && yPosition >= randomPosition - 32 && yPosition <= randomPosition){
+						if (reducedDelay > 4) // reduced delay cant be less than 4, a delay of 3 is way to fase
+							reducedDelay--;
+						points++;} // adding points
+					xWallPosition--; // wall motion
+					drawEverything(); // draws everything
+					delay(reducedDelay);} // delays for reducedDelay time
+				xWallPosition = 808;}}} // resets wall position for next wall
+
+
+
+	// This class runs the moving wall method at the same time as the mouseClicked method
+	public class movingWallHard extends Thread{
+		/* This class runs forever, it calculates the position of the wall and calls on drawEverything to display it
+			// No parameters
+			// No return value
+		 */
+		public void run(){ 
+			while (true){ // runs forever
+				randomPosition = (int) (Math.random() * (598 - 32 + 1) + 32);
+				int randomDirection = (int)(Math.random() * (2 - 1 + 1) + 1); // random direction for the hole
+				int multiplier = -1;
+				if (randomDirection == 2) // hole moves up
+					multiplier = 1;
+				else if (randomDirection == 1) // hole moves down
+					multiplier = -1;
+				while (xWallPosition >= -8){ // wall moves till -8, wall is 8 thick so it goes until its completely off screen
+					if (xWallPosition == xPosition && !(yPosition >= randomPosition - 32 && yPosition <= randomPosition)){
+						stopRunning = true; // stop displaying main screen
+						endingScreen();} // run ending screen
+					else if (xWallPosition == xPosition && yPosition >= randomPosition - 32 && yPosition <= randomPosition){
+						if (reducedDelay > 4) // reduced delay cant be less than 4, a delay of 3 is way to fase
+							reducedDelay--;
+						points++;} // adding points
+					randomPosition += multiplier; // for hard mode, the position of the random hole is moving
+					if (randomPosition >= 599 || randomPosition <= 33) // barriers for the random hole
+						multiplier *= -1;
+					xWallPosition--; // wall motion
+					drawEverything(); // draws everything
+					delay(reducedDelay);} // delays for reducedDelay time
+				xWallPosition = 792;}}} // resets wall position for next wall
+
+
+
+	/* This method checks to see if the mouse has been clicked. If so, it runs a program depending on the position of the mouse click
+	// MouseEvent e is the parameter, it checks to see if the mouse was pressed an if so it gets the position of the mouse click
+	// No return value
+	 */
+	public void mouseClicked (MouseEvent e){
+		int xMousePos = e.getX();
+		int yMousePos = e.getY();
+		movingWallEasy startWallEasy = new movingWallEasy();
+		movingWallHard startWallHard = new movingWallHard();
+		if (xMousePos >= 5 && xMousePos <= 392 && yMousePos >= 186 && yMousePos <= 385 && stopRunning){ // Checks to see if 'Play' was clicked
+			stopRunning = false;
+			startWallEasy.start();} // starts the thread and runs alongsie keyPressed
+		else if (xMousePos >= 402 && xMousePos <= 790 && yMousePos >= 186 && yMousePos <= 385 && stopRunning){
+			stopRunning = false;
+			startWallHard.start();}
+		else if (xMousePos >= 5 && xMousePos <= 392 && yMousePos >= 400 && yMousePos <= 596 && stopRunning){ // Checks to see if 'Instrutions' was clicked
+			stopRunning = false;
+			instructions();} // starts the instructions screen method
+		else if (xMousePos >= 405 && xMousePos <= 795 && yMousePos >= 400 && yMousePos <= 596 && stopRunning){ // Checks to see if 'Exit' was clicked
+			stopRunning = false;
+			endingScreen();}} // starts the ending screen method which ends the game
+
+
+
+	/* This method checks to see if a key has been pressed. If so, it checks to see which key was pressed and adds or subtracts a value based off of it
+	// KeyEvent e is the parameter, it checks to see if a key has been pressed and if so, it checks to see what key was pressed
+	// No return value
+	 */
+	public void keyPressed(KeyEvent e){
+		int movementValue = e.getKeyCode();
+		oldYPosition = yPosition;
+		if ((xWallPosition - xPosition >= 20 || xPosition - xWallPosition >= 20) && !stopRunning) {
+			if (movementValue == KeyEvent.VK_UP || movementValue == 'W') { // if W or UP_ARROW was pressed, move up
+				if (!(yPosition <= 8))
+					yPosition -= 10;}
+			else if (movementValue == KeyEvent.VK_DOWN || movementValue == 'S') { // if S or DOWN_ARROW was pressed, move down
+				if (!(yPosition >= 586))
+					yPosition += 10;}
+			else if (movementValue == KeyEvent.VK_RIGHT || movementValue == 'D') { // if D or RIGHT_ARROW was pressed, move right
+				if (!(xPosition >= 782))
+					xPosition += 10;}
+			else if (movementValue == KeyEvent.VK_LEFT || movementValue == 'A') { // if A or LEFT_ARROW was pressed, move left
+				if (!(xPosition <= 0))
+					xPosition -= 10;}}}
+
+
+
+	public void mouseReleased (MouseEvent e){}
+
+
+
+	public void mouseEntered (MouseEvent e){}
+
+
+
+	public void mouseExited (MouseEvent e){}
+
+
+
+	public void mousePressed (MouseEvent e){}
+
+
+
+	public void keyTyped(KeyEvent e){}
+
+
+
+	public void keyReleased(KeyEvent e){}
+
+
+
+	/* This method delays the program for a certain amount of milliseconds
+	// Millisec is the parameter, it is used to delay the program for a certain amount of milliseconds
+	// No return value
+	 */
+	public void delay (int millisec){
+		try{ // Sleep program needs to be surrounded by a try/catch
+			TimeUnit.MILLISECONDS.sleep(millisec);} // delays program for a certain number of milliseconds
+		catch (InterruptedException e){}}
+
+
+
+	public static void main (String args[]){
+		JFrame frame = new JFrame ("Hole In The Wall"); // creating JFrame
+		HoleInTheWall myPanel = new HoleInTheWall(); // creating panel (container)
+		myPanel.setLayout (new BoxLayout (myPanel, BoxLayout.PAGE_AXIS)); // setting points to stay on left hand side of the screen
+		frame.add(myPanel); // adding container to frame
+		frame.pack (); // packing both together
+		frame.setVisible (true);}} // setting frame to visible so everything is drawn on the screen
